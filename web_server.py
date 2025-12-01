@@ -62,7 +62,16 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     # Only add CSP if not already set
     if "Content-Security-Policy" not in response.headers:
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+        # Allow Google Fonts, CDN scripts (JSZip), and necessary external resources
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com data:; "
+            "img-src 'self' data: https: http: blob:; "
+            "connect-src 'self' ws: wss: https: http:; "
+            "media-src 'self' data: https: http: blob:;"
+        )
     return response
 
 # Serve static files (background image, videos, fonts, etc.)
@@ -1035,6 +1044,15 @@ async def websocket_endpoint(websocket: WebSocket):
                             collection_info_data["total_owners"] = collection_stats.total_owners
                         if collection_stats.market_cap is not None:
                             collection_info_data["market_cap"] = collection_stats.market_cap
+                        # Add image URL if available
+                        if hasattr(collection_stats, 'image_url') and collection_stats.image_url:
+                            collection_info_data["image_url"] = str(collection_stats.image_url)
+                        elif hasattr(collection_stats, 'logo') and collection_stats.logo:
+                            collection_info_data["image_url"] = str(collection_stats.logo)
+                        elif hasattr(collection_stats, 'banner_image') and collection_stats.banner_image:
+                            collection_info_data["image_url"] = str(collection_stats.banner_image)
+                        elif hasattr(collection_stats, 'collection_image') and collection_stats.collection_image:
+                            collection_info_data["image_url"] = str(collection_stats.collection_image)
                     
                     # Send collection info to UI BEFORE starting to scrape
                     await manager.send_personal_message(collection_info_data, websocket)
