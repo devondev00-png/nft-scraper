@@ -322,5 +322,5 @@ class SeleniumScraper:
             except Exception as e:
                 logger.debug(f"Error closing WebDriver: {e}")
             finally:
-            self.driver = None
+                self.driver = None
 
