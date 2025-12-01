@@ -1,0 +1,2840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCRAPER - Live NFT Scraper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Tron';
+            src: url('/static/Tron.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Global scrollbar hiding for all scrollable elements */
+        * {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
+        
+        *::-webkit-scrollbar-track {
+            display: none !important;
+            background: transparent !important;
+        }
+        
+        *::-webkit-scrollbar-thumb {
+            display: none !important;
+            background: transparent !important;
+        }
+
+        body {
+            font-family: 'Tron', 'JetBrains Mono', 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 0;
+            color: #333;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Hide extension active button - comprehensive selectors */
+        button[class*="extension"],
+        button[id*="extension"],
+        button[class*="Extension"],
+        button[id*="Extension"],
+        .extension-active,
+        [class*="extension-active"],
+        [id*="extension-active"],
+        [class*="Extension-active"],
+        [id*="Extension-active"],
+        button:has-text("EXTENSION"),
+        button:has-text("Extension"),
+        /* Target buttons with dog icon and extension text */
+        button img[src*="dog"],
+        button img[alt*="dog"],
+        button img[alt*="Dog"],
+        /* Any button in bottom right corner with extension-like styling */
+        button[style*="position: fixed"][style*="bottom"],
+        button[style*="position:fixed"][style*="bottom"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            left: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .main-wrapper {
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            background-image: url('/static/container%20.png');
+            background-size: 120%;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .content-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header-container {
+            background: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.08);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid rgba(255, 255, 255, 0.5);
+            border-left: 2px solid rgba(255, 255, 255, 0.5);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+            border-right: 2px solid rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 8px 30px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 2px 4px rgba(255, 255, 255, 0.2) inset,
+                0 -2px 4px rgba(0, 0, 0, 0.3) inset,
+                0 4px 8px rgba(0, 0, 0, 0.3);
+            height: 60px;
+            flex-shrink: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header * {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header .logo {
+            height: 100%;
+            max-height: 85px;
+            width: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 10px 15px;
+        }
+
+        .header .logo img {
+            height: 100%;
+            max-height: 85px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header .header-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        .header .status-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-left: auto;
+            flex-shrink: 0;
+            height: 100%;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            margin: 0;
+            font-family: 'Tron', monospace;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+            margin: 5px 0 0 0;
+        }
+
+
+        .controls {
+            padding: 10px 20px;
+            background-image: url('/static/container%20.png');
+            background-size: 130%;
+            background-position: center;
+            background-repeat: no-repeat;
+            background: linear-gradient(rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0.95)),
+                        url('/static/container%20.png');
+            background-blend-mode: overlay;
+            background-size: 130%, cover;
+            border-bottom: 2px solid #e9ecef;
+            position: relative;
+            z-index: 1;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            flex-shrink: 0;
+        }
+
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            background: white;
+            color: #333;
+        }
+
+        input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="text"]::placeholder {
+            color: #999;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Tron', 'JetBrains Mono', monospace;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: rgba(100, 100, 100, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid rgba(255, 255, 255, 0.4);
+            border-left: 2px solid rgba(255, 255, 255, 0.4);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+            border-right: 2px solid rgba(0, 0, 0, 0.3);
+            color: white;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 2px 4px rgba(255, 255, 255, 0.2) inset,
+                0 -2px 4px rgba(0, 0, 0, 0.3) inset;
+            transition: all 0.3s ease;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            background: rgba(120, 120, 120, 0.4);
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 2px 4px rgba(255, 255, 255, 0.3) inset,
+                0 -2px 4px rgba(0, 0, 0, 0.4) inset;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-icon {
+            height: 24px;
+            width: auto;
+            display: block;
+        }
+
+        .stats-bar {
+            display: none; /* Hidden for now */
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .stat-card video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .stat-card h3,
+        .stat-card .value {
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            color: #fff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Tron', monospace;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .stat-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+            padding: 10px;
+            height: calc(100vh - 200px);
+            max-height: calc(100vh - 200px);
+            overflow: visible;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .panel-container {
+            position: relative;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background-image: url('/static/container%20.png');
+            background-size: 150%;
+            background-position: center;
+            background-repeat: no-repeat;
+            background: linear-gradient(rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0.95)),
+                        url('/static/container%20.png');
+            background-blend-mode: overlay;
+            background-size: 150%, cover;
+            border-radius: 10px;
+            padding: 10px;
+            height: 100%;
+            max-height: 100%;
+            -webkit-backdrop-filter: blur(2px);
+            backdrop-filter: blur(2px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e9ecef;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+            min-height: 0;
+        }
+        
+        .panel:has(.log-container) {
+            overflow: visible;
+        }
+
+        .panel:has(.log-container) {
+            padding: 8px;
+        }
+
+        .panel h2 {
+            margin-bottom: 10px;
+            color: #fff;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-family: 'Tron', monospace;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        .panel h2 .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .panel:has(.log-container) h2 {
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .panel-icon {
+            height: 36px;
+            width: auto;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .panel-icon[src*="anonscraper"] {
+            height: 48px;
+        }
+
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            /* Auto height - grows with content */
+            min-height: 600px;
+            max-height: none;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            align-items: start; /* Align cards to top */
+            /* Hide scrollbar but keep scrolling - COMPREHENSIVE */
+            scrollbar-width: none !important; /* Firefox */
+            -ms-overflow-style: none !important; /* IE and Edge */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            scroll-behavior: smooth;
+        }
+        
+        .nft-grid::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
+        
+        .nft-grid::-webkit-scrollbar-track {
+            display: none !important;
+            background: transparent !important;
+        }
+        
+        .nft-grid::-webkit-scrollbar-thumb {
+            display: none !important;
+            background: transparent !important;
+        }
+
+        @media (max-width: 1600px) {.nft-grid {grid-template-columns: repeat(3, 1fr);}}
+
+        @media (max-width: 1200px) {
+            .nft-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 800px) {
+            .nft-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .nft-card {
+            background: transparent;
+            border-radius: 10px;
+            overflow: visible; /* Changed from hidden to visible to show full content */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            animation: slideIn 0.3s ease-out;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px; /* Increased to show full NFT */
+            max-height: none; /* Allow cards to grow to fit content */
+        }
+        
+        .nft-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nft-card.selected {
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .nft-card .checkbox {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ff00;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .nft-card.selected .checkbox {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        .nft-card .download-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+            font-family: 'Tron', 'JetBrains Mono', monospace;
+        }
+        
+        .nft-card:hover .download-btn {
+            opacity: 1;
+        }
+        
+        .nft-card .download-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        .nft-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #f0f0f0;
+            display: block;
+            min-height: 150px;
+        }
+        
+        .nft-image[src=""],
+        .nft-image:not([src]) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .nft-info {
+            padding: 10px;
+        }
+
+        .nft-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nft-token-id {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .log-container {
+            background: transparent !important;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 8px;
+            font-family: 'Tron', 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            flex: 1;
+            min-height: 0;
+            height: 400px;
+            max-height: 400px;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            /* Hide scrollbar but keep scrolling - COMPREHENSIVE */
+            scrollbar-width: none !important; /* Firefox */
+            -ms-overflow-style: none !important; /* IE and Edge */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            scroll-behavior: smooth;
+            position: relative;
+        }
+        
+        .log-container::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
+        
+        .log-container::-webkit-scrollbar-track {
+            display: none !important;
+            background: transparent !important;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb {
+            display: none !important;
+            background: transparent !important;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            border-left: 2px solid transparent;
+            padding-left: 10px;
+            line-height: 1.4;
+            width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap; /* Preserve formatting but allow wrapping */
+        }
+
+        .log-entry.info {
+            border-left-color: #4a9eff;
+            color: #d4d4d4;
+        }
+
+        .log-entry.success {
+            border-left-color: #4caf50;
+            color: #d4d4d4;
+        }
+
+        .log-entry.error {
+            border-left-color: #f44336;
+            color: #d4d4d4;
+        }
+
+        .log-entry.warning {
+            border-left-color: #ff9800;
+            color: #d4d4d4;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.connected {
+            background: #4caf50;
+        }
+
+        .status-indicator.disconnected {
+            background: #f44336;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #fff;
+            font-size: 0.9em;
+        }
+        
+        .empty-state p {
+            font-size: 0.9em;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.8),
+                0 4px 8px rgba(255, 255, 255, 0.1) inset;
+            max-width: 600px;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            color: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+        
+        .modal-content {
+            padding: 10px;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 0;
+            max-height: 500px;
+        }
+
+        .modal-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            opacity: 0.4;
+            pointer-events: none;
+            filter: brightness(0.7) contrast(1.2);
+        }
+
+        .modal-header,
+        .modal-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-header {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+
+        .modal-info-section {
+            margin-bottom: 10px;
+        }
+
+        .modal-info-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 1em;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .modal-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .modal-info-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-info-item strong {
+            display: block;
+            margin-bottom: 5px;
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+
+        .modal-info-item .value {
+            font-size: 1em;
+            word-break: break-all;
+        }
+
+        .modal-info-item a {
+            color: #4CAF50;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .modal-info-item a:hover {
+            text-decoration: underline;
+        }
+
+        .modal-image {
+            width: 100%;
+            max-width: 250px;`n            max-height: 150px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            display: block;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            cursor: pointer;
+        }
+        
+        .modal-image:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s;
+        }
+        
+        .nft-view-modal {
+            max-width: 900px;
+        }
+        
+        .nft-view-modal .modal-image {
+            max-width: 600px;
+            max-height: 600px;
+        }
+        
+        .download-all-btn {
+            background: rgba(100, 100, 100, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid rgba(255, 255, 255, 0.4);
+            border-left: 2px solid rgba(255, 255, 255, 0.4);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+            border-right: 2px solid rgba(0, 0, 0, 0.3);
+            color: white;
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Tron', 'JetBrains Mono', monospace;
+            transition: all 0.3s;
+            display: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 2px 4px rgba(255, 255, 255, 0.2) inset,
+                0 -2px 4px rgba(0, 0, 0, 0.3) inset;
+        }
+        
+        .download-all-btn:hover:not(:disabled) {
+            background: rgba(120, 120, 120, 0.4);
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 2px 4px rgba(255, 255, 255, 0.3) inset,
+                0 -2px 4px rgba(0, 0, 0, 0.4) inset;
+            transform: translateY(-1px);
+        }
+        
+        .download-all-btn.visible {
+            display: block;
+        }
+        
+        .clear-btn {
+            background: rgba(200, 50, 50, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 100, 100, 0.3);
+            border-top: 2px solid rgba(255, 150, 150, 0.4);
+            border-left: 2px solid rgba(255, 150, 150, 0.4);
+            border-bottom: 2px solid rgba(100, 0, 0, 0.3);
+            border-right: 2px solid rgba(100, 0, 0, 0.3);
+            color: white;
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Tron', 'JetBrains Mono', monospace;
+            transition: all 0.3s;
+            display: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 2px 4px rgba(255, 150, 150, 0.2) inset,
+                0 -2px 4px rgba(100, 0, 0, 0.3) inset;
+        }
+        
+        .clear-btn:hover:not(:disabled) {
+            background: rgba(220, 70, 70, 0.4);
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 2px 4px rgba(255, 150, 150, 0.3) inset,
+                0 -2px 4px rgba(100, 0, 0, 0.4) inset;
+            transform: translateY(-1px);
+        }
+
+        .modal-actions {
+            padding: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
+
+        .modal-actions button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: 'Tron', 'JetBrains Mono', monospace;
+        }
+
+        .modal-confirm {
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-confirm:hover {
+            background: rgba(76, 175, 80, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .modal-cancel {
+            background: rgba(100, 100, 100, 0.3);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-cancel:hover {
+            background: rgba(100, 100, 100, 0.5);
+        }
+
+        .modal-loading {
+            text-align: center;
+            padding: 40px;
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .modal-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <!-- JSZip library for creating ZIP files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <video id="background-video" autoplay muted loop>
+        <source src="/static/Generating_Tron_Grid_Video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="main-wrapper">
+        <div class="container header-container">
+            <div class="header">
+                <img src="/static/logotron.png" alt="SCRAPER Logo" class="logo">
+                <div class="header-content">
+                    <p style="margin: 0; font-size: 1.5em; font-weight: 600;">Paywall0x402 Multi-Chain NFT Scraper</p>
+                </div>
+                <div class="status-section">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="container controls-container">
+            <div class="controls">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="collectionInput" 
+                        placeholder="Enter collection URL or contract address (e.g., OpenSea URL, Magic Eden, or 0x...)"
+                        autocomplete="off"
+                    >
+                    <button id="scrapeBtn" onclick="startScraping()">
+                        <img src="/static/scrape.png" alt="Scrape" class="button-icon">
+                        <span>Scrape</span>
+                    </button>
+                    <button id="stopBtn" onclick="stopScraping()" disabled>
+                        <img src="/static/stopsign.png" alt="Stop" class="button-icon">
+                        <span>Stop</span>
+                    </button>
+                </div>
+
+                <div class="stats-bar">
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>NFTs Scraped</h3>
+                        <div class="value" id="totalScraped">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Collection</h3>
+                        <div class="value" id="collectionName" style="font-size: 1.2em;">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Chain</h3>
+                        <div class="value" id="chainName" style="font-size: 1.2em;">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Status</h3>
+                        <div class="value" id="scrapingStatus" style="font-size: 1.2em;">Idle</div>
+                    </div>
+                </div>
+
+                <div class="stats-bar" style="margin-top: 15px;">
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Total Collection Size</h3>
+                        <div class="value" id="collectionTotal" style="font-size: 1.2em;">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Scraped</h3>
+                        <div class="value" id="collectionScraped">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Remaining</h3>
+                        <div class="value" id="collectionRemaining" style="font-size: 1.2em;">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Progress</h3>
+                        <div class="value" id="collectionProgress" style="font-size: 1.2em;">0%</div>
+                    </div>
+                </div>
+
+                <div class="stats-bar" style="margin-top: 15px;">
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Floor Price</h3>
+                        <div class="value" id="floorPrice" style="font-size: 1.2em;">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>24h Volume</h3>
+                        <div class="value" id="volume24h" style="font-size: 1.2em;">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Owners</h3>
+                        <div class="value" id="totalOwners" style="font-size: 1.2em;">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <video autoplay muted loop >
+                            <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+                        </video>
+                        <h3>Market Cap</h3>
+                        <div class="value" id="marketCap" style="font-size: 1.2em;">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container content-container">
+            <div class="content">
+                <div class="panel-container">
+                    <div class="panel">
+                        <h2>
+                            <span style="display: flex; align-items: center; gap: 10px;">
+                                <img src="/static/anonscraper.png" alt="Scraped NFTs" class="panel-icon"> Scraped NFTs
+                            </span>
+                            <span class="header-actions">
+                                <button id="downloadAllBtn" class="download-all-btn" onclick="downloadAllNfts()" style="display: none;">⬇️ Download All</button>
+                                <button id="downloadSelectedBtn" class="download-all-btn" onclick="downloadSelectedNfts()" style="display: none;">⬇️ Download Selected</button>
+                                <button id="selectAllBtn" class="clear-btn" onclick="toggleSelectAll()" style="display: none;">☑️ Select All</button>
+                                <button id="clearNftsBtn" class="clear-btn" onclick="clearNfts()" style="display: none;">Clear</button>
+                            </span>
+                        </h2>
+                        <div id="nftGrid" class="nft-grid">
+                            <div class="empty-state">
+                                <p>No NFTs scraped yet. Enter a collection URL and click "Start Scraping"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-container">
+                    <div class="panel">
+                        <h2><img src="/static/clipboard.png" alt="Activity Log" class="panel-icon"> Activity Log</h2>
+                        <div id="logContainer" class="log-container">
+                            <div class="log-entry info">Ready to scrape...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Suppress extension-related console errors
+        (function() {
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            const originalLog = console.log;
+            
+            const suppressPatterns = [
+                /UTXO check/i,
+                /Text inscription/i,
+                /RPC returned/i,
+                /Wallet may be syncing/i,
+                /listunspent RPC/i,
+                /RPC promise resolved/i,
+                /Inscription Error/i,
+                /extension/i,
+                /oneTap/i,
+                /contentScript/i,
+                /solanaActions/i
+            ];
+            
+            function shouldSuppress(message) {
+                if (!message) return false;
+                const msgStr = String(message);
+                return suppressPatterns.some(pattern => pattern.test(msgStr));
+            }
+            
+            console.error = function(...args) {
+                if (!shouldSuppress(args[0])) {
+                    originalError.apply(console, args);
+                }
+            };
+            
+            console.warn = function(...args) {
+                if (!shouldSuppress(args[0])) {
+                    originalWarn.apply(console, args);
+                }
+            };
+            
+            console.log = function(...args) {
+                if (!shouldSuppress(args[0])) {
+                    originalLog.apply(console, args);
+                }
+            };
+        })();
+
+        let ws = null;
+        let isScraping = false;
+        let nfts = [];
+        let pendingCollectionUrl = null;
+        let pendingCollectionInfo = null;
+        let totalScrapedCount = 0;
+        let collectionTotalSize = null;
+        let incrementalZip = null;  // Incremental ZIP for streaming downloads
+        let selectedNfts = new Set();  // Track selected NFTs
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            try {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    updateStatus(true);
+                    addLog('Connected to server', 'success');
+                    console.log('WebSocket connected successfully');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (e) {
+                        console.error('Error parsing WebSocket message:', e);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    addLog('Connection error - check server', 'error');
+                    updateStatus(false);
+                };
+
+                ws.onclose = (event) => {
+                    updateStatus(false);
+                    if (event.code !== 1000) {
+                        addLog(`Disconnected (code: ${event.code}) - reconnecting...`, 'warning');
+                        // Reconnect after 3 seconds
+                        setTimeout(connectWebSocket, 3000);
+                    } else {
+                        addLog('Connection closed', 'info');
+                    }
+                };
+            } catch (error) {
+                console.error('Failed to create WebSocket:', error);
+                addLog('Failed to connect - retrying...', 'error');
+                setTimeout(connectWebSocket, 3000);
+            }
+        }
+
+        function updateStatus(connected) {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            
+            if (!indicator || !text) {
+                return; // Elements don't exist yet
+            }
+            
+            if (connected) {
+                indicator.className = 'status-indicator connected';
+                text.textContent = 'Connected';
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'clear': {
+                    nfts = [];
+                    totalScrapedCount = 0;
+                    collectionTotalSize = null;
+                    selectedNfts.clear();
+                    incrementalZip = null;  // Reset incremental ZIP
+                    const nftGrid = document.getElementById('nftGrid');
+                    if (nftGrid) nftGrid.innerHTML = '<div class="empty-state"><p>No NFTs scraped yet. Enter a collection URL and click "Start Scraping"</p></div>';
+                    const totalScrapedEl = document.getElementById('totalScraped');
+                    if (totalScrapedEl) totalScrapedEl.textContent = '0';
+                    const collectionTotal = document.getElementById('collectionTotal');
+                    if (collectionTotal) collectionTotal.textContent = '-';
+                    const collectionScraped = document.getElementById('collectionScraped');
+                    if (collectionScraped) collectionScraped.textContent = '0';
+                    const collectionRemaining = document.getElementById('collectionRemaining');
+                    if (collectionRemaining) collectionRemaining.textContent = '-';
+                    const collectionProgress = document.getElementById('collectionProgress');
+                    if (collectionProgress) collectionProgress.textContent = '0%';
+                    const floorPrice = document.getElementById('floorPrice');
+                    if (floorPrice) floorPrice.textContent = '-';
+                    const volume24h = document.getElementById('volume24h');
+                    if (volume24h) volume24h.textContent = '-';
+                    const totalOwners = document.getElementById('totalOwners');
+                    if (totalOwners) totalOwners.textContent = '-';
+                    const marketCap = document.getElementById('marketCap');
+                    if (marketCap) marketCap.textContent = '-';
+                    addLog(data.message || 'Clearing results...', 'info');
+                    break;
+                }
+
+                case 'status': {
+                    addLog(data.message, 'info', data.api_source || null);
+                    if (data.contract_address) {
+                        const collectionName = document.getElementById('collectionName');
+                        if (collectionName) collectionName.textContent = data.contract_address || '-';
+                    }
+                    if (data.chain) {
+                        const chainName = document.getElementById('chainName');
+                        if (chainName) chainName.textContent = data.chain || '-';
+                    }
+                    const scrapingStatus = document.getElementById('scrapingStatus');
+                    if (scrapingStatus) scrapingStatus.textContent = 'Scraping...';
+                    break;
+                }
+
+                case 'collection_info': {
+                    // Store collection total for tracking
+                    if (data.collection_total !== null && data.collection_total !== undefined) {
+                        collectionTotalSize = data.collection_total;
+                    } else if (data.total_supply !== null && data.total_supply !== undefined) {
+                        collectionTotalSize = data.total_supply;
+                    }
+                    
+                    // Check if this is for the confirmation modal (pendingCollectionUrl exists)
+                    if (pendingCollectionUrl) {
+                        // Render in modal
+                        try {
+                            renderCollectionInfo(data);
+                        } catch (error) {
+                            console.error('Error rendering collection info:', error);
+                            const modalContent = document.getElementById('modalContent');
+                            if (modalContent) {
+                                modalContent.innerHTML = `
+                                    <div class="modal-loading">
+                                        <p style="color: #ff4444; font-size: 1.2em;">Error Loading Collection</p>
+                                        <p style="margin-top: 15px; opacity: 0.9;">${error.message || 'Failed to render collection information'}</p>
+                                        <div class="modal-actions" style="margin-top: 30px;">
+                                            <button class="modal-cancel" onclick="cancelScraping()">Close</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } else {
+                        // Just update the UI (from input field debounce)
+                        if (data.collection_name) {
+                            const collectionName = document.getElementById('collectionName');
+                            if (collectionName) collectionName.textContent = data.collection_name;
+                        }
+                        if (data.chain) {
+                            const chainName = document.getElementById('chainName');
+                            if (chainName) chainName.textContent = data.chain;
+                        }
+                        if (collectionTotalSize !== null) {
+                            const collectionTotal = document.getElementById('collectionTotal');
+                            if (collectionTotal) collectionTotal.textContent = collectionTotalSize.toLocaleString();
+                            const collectionRemaining = document.getElementById('collectionRemaining');
+                            if (collectionRemaining) collectionRemaining.textContent = collectionTotalSize.toLocaleString();
+                            const collectionProgress = document.getElementById('collectionProgress');
+                            if (collectionProgress) collectionProgress.textContent = '0%';
+                            const collectionScraped = document.getElementById('collectionScraped');
+                            if (collectionScraped) collectionScraped.textContent = '0';
+                        }
+                        // Update marketplace data if available
+                        if (data.floor_price !== null && data.floor_price !== undefined) {
+                            const currency = data.floor_price_currency || 'ETH';
+                            const formattedPrice = typeof data.floor_price === 'number' 
+                                ? data.floor_price.toFixed(4) 
+                                : data.floor_price;
+                            const floorPrice = document.getElementById('floorPrice');
+                            if (floorPrice) floorPrice.textContent = `${formattedPrice} ${currency}`;
+                        }
+                        if (data.volume_24h !== null && data.volume_24h !== undefined) {
+                            const currency = data.floor_price_currency || 'ETH';
+                            const formattedVolume = typeof data.volume_24h === 'number'
+                                ? data.volume_24h.toFixed(2)
+                                : data.volume_24h;
+                            const volume24h = document.getElementById('volume24h');
+                            if (volume24h) volume24h.textContent = `${formattedVolume} ${currency}`;
+                        }
+                        if (data.total_owners !== null && data.total_owners !== undefined) {
+                            const totalOwners = document.getElementById('totalOwners');
+                            if (totalOwners) totalOwners.textContent = data.total_owners.toLocaleString();
+                        }
+                        if (data.market_cap !== null && data.market_cap !== undefined) {
+                            const currency = data.floor_price_currency || 'ETH';
+                            const formattedCap = typeof data.market_cap === 'number'
+                                ? (data.market_cap >= 1000 ? (data.market_cap / 1000).toFixed(2) + 'K' : data.market_cap.toFixed(2))
+                                : data.market_cap;
+                            const marketCap = document.getElementById('marketCap');
+                            if (marketCap) marketCap.textContent = `${formattedCap} ${currency}`;
+                        }
+                    }
+                    break;
+                }
+
+                case 'nft': {
+                    // Check if NFT already exists (avoid duplicates)
+                    const exists = nfts.some(n => n.token_id === data.nft.token_id && n.contract_address === data.nft.contract_address);
+                    if (!exists) {
+                        nfts.push(data.nft);
+                        totalScrapedCount = data.total_scraped || nfts.length;
+                        displayNFT(data.nft);
+                        
+                        // Add to incremental ZIP as it's scraped
+                        addToIncrementalZip(data.nft);
+                        
+                        const totalScrapedEl = document.getElementById('totalScraped');
+                        if (totalScrapedEl) totalScrapedEl.textContent = totalScrapedCount;
+                        updateDownloadButton(); // Update download button
+                        const nftName = data.nft.name || `Token #${data.nft.token_id}`;
+                        const countText = collectionTotalSize ? ` (${totalScrapedCount}/${collectionTotalSize})` : ` (${totalScrapedCount})`;
+                        addLog(`✅ Scraped: ${nftName}${countText}`, 'success', data.api_source || null);
+                    }
+                    break;
+                }
+
+                case 'progress': {
+                    totalScrapedCount = data.total_scraped || totalScrapedCount;
+                    const totalScrapedEl = document.getElementById('totalScraped');
+                    if (totalScrapedEl) totalScrapedEl.textContent = totalScrapedCount;
+                    if (data.collection_total !== null && data.collection_total !== undefined) {
+                        collectionTotalSize = data.collection_total;
+                        const collectionTotal = document.getElementById('collectionTotal');
+                        if (collectionTotal) collectionTotal.textContent = collectionTotalSize.toLocaleString();
+                    }
+                    const collectionScraped = document.getElementById('collectionScraped');
+                    if (collectionScraped) collectionScraped.textContent = totalScrapedCount.toLocaleString();
+                    if (data.remaining !== null && data.remaining !== undefined) {
+                        const collectionRemaining = document.getElementById('collectionRemaining');
+                        if (collectionRemaining) collectionRemaining.textContent = data.remaining.toLocaleString();
+                    }
+                    if (data.progress_pct !== null && data.progress_pct !== undefined) {
+                        const collectionProgress = document.getElementById('collectionProgress');
+                        if (collectionProgress) collectionProgress.textContent = data.progress_pct + '%';
+                    }
+                    // Update log with progress
+                    const progressText = collectionTotalSize ? `📊 Progress: ${totalScrapedCount}/${collectionTotalSize} (${data.progress_pct || 0}%)` : `📊 Progress: ${totalScrapedCount} NFTs scraped`;
+                    addLog(progressText, 'info', data.api_source || null);
+                    break;
+                }
+
+                case 'complete': {
+                    addLog(data.message, 'success', data.api_source || null);
+                    const scrapingStatus = document.getElementById('scrapingStatus');
+                    if (scrapingStatus) scrapingStatus.textContent = 'Complete';
+                    if (data.collection_total !== null && data.collection_total !== undefined) {
+                        const collectionTotal = document.getElementById('collectionTotal');
+                        if (collectionTotal) collectionTotal.textContent = data.collection_total.toLocaleString();
+                    }
+                    const collectionScraped = document.getElementById('collectionScraped');
+                    if (collectionScraped) collectionScraped.textContent = data.total_scraped.toLocaleString();
+                    if (data.remaining !== null && data.remaining !== undefined) {
+                        const collectionRemaining = document.getElementById('collectionRemaining');
+                        if (collectionRemaining) collectionRemaining.textContent = data.remaining.toLocaleString();
+                    }
+                    if (data.progress_pct !== null && data.progress_pct !== undefined) {
+                        const collectionProgress = document.getElementById('collectionProgress');
+                        if (collectionProgress) collectionProgress.textContent = data.progress_pct + '%';
+                    }
+                    isScraping = false;
+                    const scrapeBtn = document.getElementById('scrapeBtn');
+                    if (scrapeBtn) scrapeBtn.disabled = false;
+                    const stopBtn = document.getElementById('stopBtn');
+                    if (stopBtn) stopBtn.disabled = true;
+                    break;
+                }
+
+                case 'warning': {
+                    addLog(data.message, 'warning', data.api_source || null);
+                    if (data.chain) {
+                        const chainName = document.getElementById('chainName');
+                        if (chainName) chainName.textContent = data.chain;
+                    }
+                    break;
+                }
+
+                case 'error': {
+                    addLog(`Error: ${data.message}`, 'error', data.api_source || null);
+                    // If modal is open, show error in modal
+                    if (pendingCollectionUrl) {
+                        const modalContent = document.getElementById('modalContent');
+                        modalContent.innerHTML = `
+                            <div class="modal-loading">
+                                <p style="color: #ff4444; font-size: 1.2em;">Error Loading Collection</p>
+                                <p style="margin-top: 15px; opacity: 0.9;">${data.message}</p>
+                                <div class="modal-actions" style="margin-top: 30px;">
+                                    <button class="modal-cancel" onclick="closeConfirmationModal()">Close</button>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        const scrapingStatus = document.getElementById('scrapingStatus');
+                        if (scrapingStatus) scrapingStatus.textContent = 'Error';
+                        isScraping = false;
+                        const scrapeBtn = document.getElementById('scrapeBtn');
+                        if (scrapeBtn) scrapeBtn.disabled = false;
+                        const stopBtn = document.getElementById('stopBtn');
+                        if (stopBtn) stopBtn.disabled = true;
+                    }
+                    break;
+                }
+
+                case 'stats': {
+                    // Handle stats if needed
+                    break;
+                }
+            }
+        }
+
+        // Make functions globally accessible
+        window.startScraping = function() {
+            const collectionInput = document.getElementById('collectionInput');
+            if (!collectionInput) return;
+            const collectionUrl = collectionInput.value.trim();
+            
+            if (!collectionUrl) {
+                alert('Please enter a collection URL or contract address');
+                return;
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Not connected to server. Please wait...');
+                return;
+            }
+
+            // Store the URL to scrape after confirmation
+            pendingCollectionUrl = collectionUrl;
+
+            // Show modal and fetch collection info
+            showConfirmationModal();
+            
+            // Request collection info for confirmation
+            ws.send(JSON.stringify({
+                action: 'get_collection_info',
+                collection_url: collectionUrl,
+                show_modal: true  // Flag to indicate this is for confirmation modal
+            }));
+
+            addLog(`Fetching collection information for confirmation...`, 'info');
+        }
+
+        window.confirmScraping = function() {
+            if (!pendingCollectionUrl) {
+                closeConfirmationModal();
+                return;
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Not connected to server. Please wait...');
+                closeConfirmationModal();
+                return;
+            }
+
+            // Close modal first
+            closeConfirmationModal();
+
+            // Clear previous results
+            nfts = [];
+            const nftGrid = document.getElementById('nftGrid');
+            if (nftGrid) nftGrid.innerHTML = '';
+            
+            // Initialize incremental ZIP
+            initIncrementalZip();
+            const totalScrapedEl = document.getElementById('totalScraped');
+            if (totalScrapedEl) totalScrapedEl.textContent = '0';
+            const scrapingStatus = document.getElementById('scrapingStatus');
+            if (scrapingStatus) scrapingStatus.textContent = 'Starting...';
+
+            // Send scrape request
+            ws.send(JSON.stringify({
+                action: 'scrape_collection',
+                collection_url: pendingCollectionUrl
+            }));
+
+            isScraping = true;
+            const scrapeBtn = document.getElementById('scrapeBtn');
+            if (scrapeBtn) scrapeBtn.disabled = true;
+            const stopBtn = document.getElementById('stopBtn');
+            if (stopBtn) stopBtn.disabled = false;
+            addLog(`Starting to scrape: ${pendingCollectionUrl}`, 'info');
+
+            // Clear pending
+            pendingCollectionUrl = null;
+            pendingCollectionInfo = null;
+        };
+
+        let modalTimeout = null;
+        
+        function showConfirmationModal() {
+            const modal = document.getElementById('confirmationModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            // Clear any existing timeout
+            if (modalTimeout) {
+                clearTimeout(modalTimeout);
+            }
+            
+            // Show loading state
+            modalContent.innerHTML = `
+                <div class="modal-loading">
+                    <div class="spinner"></div>
+                    <p>Loading collection information...</p>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+            
+            // Set timeout to show error if loading takes too long (30 seconds)
+            modalTimeout = setTimeout(() => {
+                const currentContent = modalContent.innerHTML;
+                // Only show timeout error if still showing loading spinner
+                if (currentContent.includes('Loading collection information')) {
+                    modalContent.innerHTML = `
+                        <div class="modal-loading">
+                            <p style="color: #ffaa00; font-size: 1.2em;">⚠️ Loading Timeout</p>
+                            <p style="margin-top: 15px; opacity: 0.9;">Collection info is taking longer than expected. This might be due to network issues or the collection not being found.</p>
+                            <div class="modal-actions" style="margin-top: 30px;">
+                                <button class="modal-cancel" onclick="cancelScraping()">Close</button>
+                                <button class="modal-confirm" onclick="confirmScraping()" style="margin-left: 10px;">Start Scraping Anyway</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }, 30000); // 30 second timeout
+        }
+
+        window.closeConfirmationModal = function() {
+            const modal = document.getElementById('confirmationModal');
+            if (modal) modal.classList.remove('active');
+            // DON'T clear pendingCollectionUrl here - it's needed for confirmScraping()
+            // Only clear if user explicitly cancels
+            pendingCollectionInfo = null;
+            
+            // Clear timeout
+            if (modalTimeout) {
+                clearTimeout(modalTimeout);
+                modalTimeout = null;
+            }
+        };
+        
+        window.cancelScraping = function() {
+            // User explicitly cancelled - clear everything
+            pendingCollectionUrl = null;
+            pendingCollectionInfo = null;
+            closeConfirmationModal();
+        };
+
+        function renderCollectionInfo(data) {
+            const modalContent = document.getElementById('modalContent');
+            
+            // Clear timeout since we're rendering successfully
+            if (modalTimeout) {
+                clearTimeout(modalTimeout);
+                modalTimeout = null;
+            }
+            
+            // Debug: log the data to see what we're getting
+            console.log('Collection info data received:', data);
+            
+            // Format values
+            const formatNumber = (num) => {
+                if (!num && num !== 0) return '-';
+                return typeof num === 'number' ? num.toLocaleString() : String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            };
+            const formatPrice = (price, currency) => {
+                if (!price) return '-';
+                const currencySymbol = currency || 'ETH';
+                return typeof price === 'number' ? `${price.toFixed(4)} ${currencySymbol}` : `${price} ${currencySymbol}`;
+            };
+            const formatVolume = (vol, currency) => {
+                if (!vol) return '-';
+                const currencySymbol = currency || 'ETH';
+                return typeof vol === 'number' ? `${vol.toFixed(2)} ${currencySymbol}` : `${vol} ${currencySymbol}`;
+            };
+            const formatMarketCap = (cap, currency) => {
+                if (!cap) return '-';
+                const currencySymbol = currency || 'ETH';
+                if (typeof cap === 'number') {
+                    if (cap >= 1000000) return `${(cap / 1000000).toFixed(2)}M ${currencySymbol}`;
+                    if (cap >= 1000) return `${(cap / 1000).toFixed(2)}K ${currencySymbol}`;
+                    return `${cap.toFixed(2)} ${currencySymbol}`;
+                }
+                return `${cap} ${currencySymbol}`;
+            };
+
+            // Convert HttpUrl objects to strings if needed
+            // Try multiple sources for collection image
+            let imageUrl = data.image_url ? String(data.image_url) : null;
+            if (!imageUrl || imageUrl === '/placeholder.png') {
+                // Try other possible fields
+                imageUrl = data.collection_image || data.logo || data.banner_image || null;
+            }
+            if (!imageUrl || imageUrl === '/placeholder.png') {
+                imageUrl = '/placeholder.png';
+            }
+            const websiteUrl = data.website ? String(data.website) : null;
+            const twitterUrl = data.twitter ? String(data.twitter) : null;
+            const discordUrl = data.discord ? String(data.discord) : null;
+            
+            const contractAddress = data.contract_address || '-';
+            const collectionName = data.collection_name || contractAddress;
+            const chain = data.chain || '-';
+            
+            // Try multiple sources for total supply - check all possible fields
+            const totalSupply = data.collection_total || 
+                               data.total_supply || 
+                               (data.stats && data.stats.total_supply) ||
+                               (data.stats && data.stats.collection_total) ||
+                               null;
+            const totalSupplyFormatted = totalSupply ? formatNumber(totalSupply) : '-';
+            
+            console.log('Total supply debug:', { 
+                collection_total: data.collection_total, 
+                total_supply: data.total_supply,
+                stats: data.stats,
+                final: totalSupply,
+                formatted: totalSupplyFormatted 
+            });
+            
+            const html = `
+                ${imageUrl && imageUrl !== '/placeholder.png' ? `<div style="text-align: center; margin-bottom: 20px;"><img src="${imageUrl}" alt="${collectionName}" class="modal-image" style="max-width: 300px; max-height: 300px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onerror="this.src='/placeholder.png'"></div>` : ''}
+                
+                <div class="modal-info-section">
+                    <h3>Collection Details</h3>
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <strong>Name</strong>
+                            <div class="value">${collectionName}</div>
+                        </div>
+                        <div class="modal-info-item">
+                            <strong>Chain</strong>
+                            <div class="value">${chain.toUpperCase()}</div>
+                        </div>
+                        <div class="modal-info-item">
+                            <strong>Contract Address</strong>
+                            <div class="value" style="font-size: 0.9em; word-break: break-all;">${contractAddress}</div>
+                        </div>
+                        <div class="modal-info-item">
+                            <strong>Total Supply</strong>
+                            <div class="value">${totalSupplyFormatted}</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${data.description ? `
+                <div class="modal-info-section">
+                    <h3>Description</h3>
+                    <p style="margin: 0; line-height: 1.6; opacity: 0.9;">${data.description}</p>
+                </div>
+                ` : ''}
+
+                ${(data.floor_price || data.volume_24h || data.total_owners || data.market_cap) ? `
+                <div class="modal-info-section">
+                    <h3>Marketplace Data</h3>
+                    <div class="modal-info-grid">
+                        ${data.floor_price ? `
+                        <div class="modal-info-item">
+                            <strong>Floor Price</strong>
+                            <div class="value">${formatPrice(data.floor_price, data.floor_price_currency)}</div>
+                        </div>
+                        ` : ''}
+                        ${data.volume_24h ? `
+                        <div class="modal-info-item">
+                            <strong>24h Volume</strong>
+                            <div class="value">${formatVolume(data.volume_24h, data.floor_price_currency)}</div>
+                        </div>
+                        ` : ''}
+                        ${data.total_owners ? `
+                        <div class="modal-info-item">
+                            <strong>Owners</strong>
+                            <div class="value">${formatNumber(data.total_owners)}</div>
+                        </div>
+                        ` : ''}
+                        ${data.market_cap ? `
+                        <div class="modal-info-item">
+                            <strong>Market Cap</strong>
+                            <div class="value">${formatMarketCap(data.market_cap, data.floor_price_currency)}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                ` : ''}
+
+                ${(websiteUrl || twitterUrl || discordUrl) ? `
+                <div class="modal-info-section">
+                    <h3>Social Links</h3>
+                    <div class="modal-info-grid">
+                        ${websiteUrl ? `
+                        <div class="modal-info-item">
+                            <strong>Website</strong>
+                            <div class="value"><a href="${websiteUrl}" target="_blank" rel="noopener noreferrer">${websiteUrl}</a></div>
+                        </div>
+                        ` : ''}
+                        ${twitterUrl ? `
+                        <div class="modal-info-item">
+                            <strong>Twitter</strong>
+                            <div class="value"><a href="${twitterUrl.startsWith('http') ? twitterUrl : 'https://twitter.com/' + twitterUrl.replace('@', '')}" target="_blank" rel="noopener noreferrer">${twitterUrl}</a></div>
+                        </div>
+                        ` : ''}
+                        ${discordUrl ? `
+                        <div class="modal-info-item">
+                            <strong>Discord</strong>
+                            <div class="value"><a href="${discordUrl.startsWith('http') ? discordUrl : 'https://discord.gg/' + discordUrl}" target="_blank" rel="noopener noreferrer">${discordUrl}</a></div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            modalContent.innerHTML = html + `
+                <div class="modal-actions">
+                    <button class="modal-cancel" onclick="cancelScraping()">Cancel</button>
+                    <button class="modal-confirm" onclick="confirmScraping()">Confirm & Start Scraping</button>
+                </div>
+            `;
+
+            // Store collection info
+            pendingCollectionInfo = data;
+        }
+
+        window.stopScraping = function() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+                connectWebSocket();
+            }
+            isScraping = false;
+            const scrapeBtn = document.getElementById('scrapeBtn');
+            if (scrapeBtn) scrapeBtn.disabled = false;
+            const stopBtn = document.getElementById('stopBtn');
+            if (stopBtn) stopBtn.disabled = true;
+            const scrapingStatus = document.getElementById('scrapingStatus');
+            if (scrapingStatus) scrapingStatus.textContent = 'Stopped';
+            addLog('Scraping stopped', 'warning');
+        };
+
+        function displayNFT(nft) {
+            const grid = document.getElementById('nftGrid');
+            if (!grid) return; // Grid doesn't exist yet
+            
+            // Remove empty state if exists
+            const emptyState = grid.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const card = document.createElement('div');
+            card.className = 'nft-card';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.8)';
+            card.style.transition = 'all 0.3s ease';
+            
+            // Extract image URL from various possible locations
+            let imageUrl = null;
+            
+            // Debug: log what we have
+            console.log(`[displayNFT] NFT image_url:`, nft.image_url);
+            console.log(`[displayNFT] NFT raw_metadata:`, nft.raw_metadata ? 'exists' : 'none');
+            
+            // Priority 1: Direct image_url field
+            if (nft.image_url) {
+                imageUrl = String(nft.image_url);
+            } 
+            // Priority 2: Check raw_metadata for various structures
+            else if (nft.raw_metadata) {
+                // Helius DAS API structure: content.files[0].uri or cdn_uri
+                if (nft.raw_metadata.content && nft.raw_metadata.content.files && nft.raw_metadata.content.files[0]) {
+                    imageUrl = nft.raw_metadata.content.files[0].cdn_uri || 
+                              nft.raw_metadata.content.files[0].uri ||
+                              nft.raw_metadata.content.files[0].link;
+                }
+                // Standard metadata.image
+                else if (nft.raw_metadata.image) {
+                    imageUrl = String(nft.raw_metadata.image);
+                }
+                // content.links.image
+                else if (nft.raw_metadata.content && nft.raw_metadata.content.links && nft.raw_metadata.content.links.image) {
+                    imageUrl = String(nft.raw_metadata.content.links.image);
+                }
+                // Direct files array
+                else if (nft.raw_metadata.files && nft.raw_metadata.files[0]) {
+                    imageUrl = nft.raw_metadata.files[0].cdn_uri || 
+                              nft.raw_metadata.files[0].uri ||
+                              nft.raw_metadata.files[0].link;
+                }
+                // metadata.image
+                else if (nft.raw_metadata.metadata && nft.raw_metadata.metadata.image) {
+                    imageUrl = String(nft.raw_metadata.metadata.image);
+                }
+            }
+            
+            // Debug: log extracted URL
+            console.log(`[displayNFT] Extracted imageUrl:`, imageUrl);
+            
+            // Fallback to placeholder if no image found
+            if (!imageUrl || imageUrl === 'None' || imageUrl === 'null') {
+                imageUrl = '/placeholder.png';
+            }
+            
+            const name = nft.name || nft.collection_name || `Token #${nft.token_id}`;
+            // Extract token ID - if it's a hex address (starts with 0x), use just the number part
+            let tokenId = nft.token_id || 'N/A';
+            // If token_id looks like a contract address (starts with 0x and is long), extract number
+            if (typeof tokenId === 'string' && tokenId.startsWith('0x') && tokenId.length > 10) {
+                // Try to convert hex to number, or use last few digits
+                try {
+                    tokenId = parseInt(tokenId, 16).toString();
+                } catch {
+                    // If conversion fails, use last 4 digits
+                    tokenId = tokenId.slice(-4);
+                }
+            }
+            const collectionName = nft.collection_name || 'Unknown Collection';
+
+            // Escape HTML in URLs to prevent XSS
+            const safeImageUrl = imageUrl.replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+            
+            // Create image element with IPFS gateway fallback
+            const img = document.createElement('img');
+            img.className = 'nft-image';
+            img.alt = name;
+            img.loading = 'eager'; // Load immediately, don't lazy load
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            img.style.maxHeight = '350px';
+            img.style.minHeight = '200px';
+            img.style.objectFit = 'contain'; // Show full image, not cropped
+            img.style.display = 'block';
+            img.style.margin = '0 auto';
+            
+            // IPFS gateway fallback handler - EXPANDED with more reliable gateways
+            // Shuffled order for better load distribution
+            const gateways = [
+                'https://ipfs.filebase.io/ipfs/',
+                'https://nftstorage.link/ipfs/',
+                'https://gateway.pinata.cloud/ipfs/',
+                'https://ipfs.eth.aragon.network/ipfs/',
+                'https://ipfs.fleek.co/ipfs/',
+                'https://cloudflare-ipfs.com/ipfs/',
+                'https://ipfs.io/ipfs/',
+                'https://dweb.link/ipfs/',
+                'https://gateway.ipfs.io/ipfs/',
+                'https://ipfs.infura.io/ipfs/',
+            ];
+            
+            // Shuffle gateways for better distribution
+            const shuffledGateways = [...gateways].sort(() => Math.random() - 0.5);
+            
+            let gatewayIndex = 0;
+            let attempts = 0;
+            const maxAttempts = shuffledGateways.length * 2; // Try each gateway twice
+            
+            function extractIPFSHash(url) {
+                // Extract IPFS hash and path (preserve full path)
+                if (url.includes('/ipfs/')) {
+                    // Already a gateway URL, extract hash + path
+                    return url.split('/ipfs/')[1];
+                } else if (url.startsWith('ipfs://')) {
+                    // IPFS protocol URL, remove protocol prefix
+                    return url.replace('ipfs://', '').replace(/^\/+/, '');
+                } else if (url.startsWith('Qm') || url.startsWith('baf')) {
+                    // Direct hash (may include path) - support both CIDv0 (Qm) and CIDv1 (baf)
+                    return url;
+                }
+                return null;
+            }
+            
+            function tryNextGateway() {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    // All gateways failed, hide card
+                    img.onerror = null;
+                    const card = img.closest('.nft-card');
+                    if (card) {
+                        card.style.display = 'none';
+                    }
+                    console.warn('All IPFS gateways failed for:', safeImageUrl);
+                    return;
+                }
+                
+                const hash = extractIPFSHash(safeImageUrl);
+                if (hash && (safeImageUrl.includes('ipfs') || safeImageUrl.includes('Qm') || safeImageUrl.includes('baf'))) {
+                    // Try next gateway with delay to avoid rate limiting
+                    const gateway = shuffledGateways[gatewayIndex % shuffledGateways.length];
+                    const fullUrl = gateway + hash;
+                    
+                    // Add small delay between retries (except first attempt)
+                    if (attempts > 1) {
+                        setTimeout(() => {
+                            img.src = fullUrl;
+                        }, 100 * attempts); // Exponential backoff: 100ms, 200ms, 300ms...
+                    } else {
+                        img.src = fullUrl;
+                    }
+                    gatewayIndex++;
+                } else {
+                    // Not IPFS, just use original URL
+                    img.src = safeImageUrl;
+                }
+            }
+            
+            // Set up error handler with timeout
+            let errorTimeout = null;
+            img.onerror = function() {
+                // Clear any existing timeout
+                if (errorTimeout) {
+                    clearTimeout(errorTimeout);
+                }
+                
+                if (safeImageUrl.includes('ipfs') || safeImageUrl.includes('Qm') || safeImageUrl.includes('baf')) {
+                    // Add small delay before retrying to avoid rapid-fire failures
+                    errorTimeout = setTimeout(() => {
+                        tryNextGateway();
+                    }, 50);
+                } else {
+                    // Not IPFS, hide card if image fails
+                    this.onerror = null;
+                    const card = this.closest('.nft-card');
+                    if (card) {
+                        card.style.display = 'none';
+                    }
+                }
+            };
+            
+            // Show card only when image is fully loaded
+            img.onload = function() {
+                console.log('✅ Image loaded:', this.src);
+                card.style.display = 'flex';
+                card.style.opacity = '1';
+            };
+            
+            // Start with first shuffled gateway for IPFS URLs (better distribution)
+            const hash = extractIPFSHash(safeImageUrl);
+            if (hash && (safeImageUrl.includes('ipfs') || safeImageUrl.includes('Qm') || safeImageUrl.includes('baf'))) {
+                // Use first gateway from shuffled list
+                img.src = shuffledGateways[0] + hash;
+            } else {
+                img.src = safeImageUrl;
+            }
+            
+            // Store NFT data on card for modal
+            card.dataset.nftData = JSON.stringify(nft);
+            
+            // Add click handler to open modal
+            card.onclick = function(e) {
+                // Don't trigger if clicking download button
+                if (e.target.classList.contains('download-btn') || e.target.closest('.download-btn')) {
+                    return;
+                }
+                openNftModal(nft);
+            };
+            
+            // Create card structure with image on top, info below, and checkbox
+            const cardId = `nft-${nft.token_id}-${nft.contract_address}`;
+            card.id = cardId;
+            card.dataset.nftIndex = nfts.length;
+            // Hide card until image loads
+            card.style.display = 'none';
+            card.style.opacity = '0';
+            card.innerHTML = `
+                <div class="checkbox" onclick="event.stopPropagation(); toggleNftSelection('${cardId}')">☐</div>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: visible; background: transparent; min-height: 250px;">
+                </div>
+                <div class="nft-info" style="padding: 10px; background: transparent;">
+                    <div class="nft-name" style="font-weight: 600; font-size: 0.9em; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff;">${name}</div>
+                    <div class="nft-token-id" style="font-size: 0.8em; color: #ccc;">#${tokenId}</div>
+                </div>
+            `;
+            // Insert image into the flex container
+            const imageContainer = card.querySelector('div[style*="flex: 1"]');
+            if (imageContainer) {
+                imageContainer.appendChild(img);
+            } else {
+                card.insertBefore(img, card.firstChild);
+            }
+
+            grid.insertBefore(card, grid.firstChild);
+            
+            // Card will be shown when image loads (in img.onload handler)
+            // Don't force display here - wait for image to load
+        }
+
+        function addLog(message, type = 'info', apiSource = null) {
+            const container = document.getElementById('logContainer');
+            if (!container) return; // Container doesn't exist yet
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+            
+            // Format log entry with API source if provided
+            let logText = `[${timestamp}]`;
+            if (apiSource) {
+                logText += ` [${apiSource}]`;
+            }
+            logText += ` ${message}`;
+            
+            entry.textContent = logText;
+            
+            container.insertBefore(entry, container.firstChild);
+            
+            // Keep only last 200 log entries (increased for more detailed logging)
+            while (container.children.length > 200) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        // Allow Enter key to start scraping
+        const collectionInput = document.getElementById('collectionInput');
+        if (collectionInput) {
+            collectionInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !isScraping) {
+                    startScraping();
+                }
+            });
+
+            // Debounced collection info lookup when user enters URL
+            let collectionInfoTimeout = null;
+            collectionInput.addEventListener('input', (e) => {
+            const collectionUrl = e.target.value.trim();
+            
+            // Clear previous timeout
+            if (collectionInfoTimeout) {
+                clearTimeout(collectionInfoTimeout);
+            }
+            
+            // Only fetch if there's a URL and it looks like a valid collection URL/address
+            if (collectionUrl && collectionUrl.length > 5 && !isScraping) {
+                // Debounce: wait 800ms after user stops typing
+                collectionInfoTimeout = setTimeout(() => {
+                    // Check if it looks like a URL or address
+                    const isUrl = collectionUrl.includes('://') || 
+                                  collectionUrl.includes('magiceden') || 
+                                  collectionUrl.includes('opensea') ||
+                                  collectionUrl.includes('.io') ||
+                                  collectionUrl.includes('.com');
+                    const isAddress = collectionUrl.startsWith('0x') || 
+                                     (collectionUrl.length >= 32 && collectionUrl.length <= 44);
+                    
+                    if (isUrl || isAddress) {
+                        // Fetch collection info
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({
+                                action: 'get_collection_info',
+                                collection_url: collectionUrl
+                            }));
+                            addLog('Fetching collection info...', 'info');
+                        }
+                    }
+                }, 800);
+            } else {
+                // Clear info if input is empty
+                if (!collectionUrl) {
+                    const collectionName = document.getElementById('collectionName');
+                    if (collectionName) collectionName.textContent = '-';
+                    const chainName = document.getElementById('chainName');
+                    if (chainName) chainName.textContent = '-';
+                    const collectionTotal = document.getElementById('collectionTotal');
+                    if (collectionTotal) collectionTotal.textContent = '-';
+                    const collectionRemaining = document.getElementById('collectionRemaining');
+                    if (collectionRemaining) collectionRemaining.textContent = '-';
+                    const collectionProgress = document.getElementById('collectionProgress');
+                    if (collectionProgress) collectionProgress.textContent = '0%';
+                    const collectionScraped = document.getElementById('collectionScraped');
+                    if (collectionScraped) collectionScraped.textContent = '0';
+                }
+            }
+        });
+        }
+
+
+        // NFT View Modal Functions
+        function openNftModal(nft) {
+            const modal = document.getElementById('nftViewModal');
+            if (!modal) {
+                // Create modal if it doesn't exist
+                createNftViewModal();
+            }
+            
+            const modalImg = document.getElementById('nftModalImage');
+            const modalName = document.getElementById('nftModalName');
+            const modalDescription = document.getElementById('nftModalDescription');
+            const modalAttributes = document.getElementById('nftModalAttributes');
+            const modalLinks = document.getElementById('nftModalLinks');
+            
+            if (!modalImg || !modalName || !modalDescription || !modalAttributes || !modalLinks) {
+                console.warn('Modal elements not found');
+                return;
+            }
+            
+            // Set image
+            let imageUrl = nft.image_url || '';
+            if (!imageUrl && nft.raw_metadata) {
+                if (nft.raw_metadata.image) {
+                    imageUrl = nft.raw_metadata.image;
+                } else if (nft.raw_metadata.content && nft.raw_metadata.content.files && nft.raw_metadata.content.files[0]) {
+                    imageUrl = nft.raw_metadata.content.files[0].cdn_uri || nft.raw_metadata.content.files[0].uri;
+                }
+            }
+            modalImg.src = imageUrl || '/placeholder.png';
+            modalImg.onerror = function() { this.src = '/placeholder.png'; };
+            
+            // Set name
+            modalName.textContent = nft.name || `Token #${nft.token_id}`;
+            
+            // Set description
+            const description = nft.description || (nft.raw_metadata && nft.raw_metadata.description) || 'No description available.';
+            modalDescription.textContent = description;
+            
+            // Set attributes
+            let attributes = [];
+            if (nft.raw_metadata && nft.raw_metadata.attributes) {
+                attributes = nft.raw_metadata.attributes;
+            } else if (nft.raw_metadata && nft.raw_metadata.properties && nft.raw_metadata.properties.attributes) {
+                attributes = nft.raw_metadata.properties.attributes;
+            }
+            
+            modalAttributes.innerHTML = '';
+            if (attributes.length > 0) {
+                attributes.forEach(attr => {
+                    const attrDiv = document.createElement('div');
+                    attrDiv.className = 'modal-attribute';
+                    attrDiv.innerHTML = `
+                        <strong>${attr.trait_type || attr.name || 'Attribute'}:</strong>
+                        <span>${attr.value || '-'}</span>
+                    `;
+                    modalAttributes.appendChild(attrDiv);
+                });
+            } else {
+                modalAttributes.innerHTML = '<p style="opacity: 0.7;">No attributes available.</p>';
+            }
+            
+            // Set links
+            modalLinks.innerHTML = '';
+            if (nft.contract_address) {
+                const chain = nft.chain || 'ethereum';
+                let explorerUrl = '';
+                if (chain === 'ethereum' || chain === 'eth') {
+                    explorerUrl = `https://etherscan.io/token/${nft.contract_address}?a=${nft.token_id}`;
+                } else if (chain === 'polygon') {
+                    explorerUrl = `https://polygonscan.com/token/${nft.contract_address}?a=${nft.token_id}`;
+                } else if (chain === 'solana') {
+                    explorerUrl = `https://solscan.io/token/${nft.token_id}`;
+                }
+                
+                if (explorerUrl) {
+                    const linkDiv = document.createElement('div');
+                    linkDiv.innerHTML = `<a href="${explorerUrl}" target="_blank" rel="noopener noreferrer">View on Explorer</a>`;
+                    modalLinks.appendChild(linkDiv);
+                }
+            }
+            
+            // Store NFT data for download
+            modal.dataset.nftData = JSON.stringify(nft);
+            
+            // Show modal
+            const nftViewModal = document.getElementById('nftViewModal');
+            if (nftViewModal) nftViewModal.classList.add('active');
+        }
+        
+        window.closeNftModal = function() {
+            const modal = document.getElementById('nftViewModal');
+            if (modal) modal.classList.remove('active');
+        };
+        
+        function createNftViewModal() {
+            const modalHTML = `
+                <div id="nftViewModal" class="modal-overlay" onclick="if(event.target.id === 'nftViewModal') closeNftModal()">
+                    <div class="modal nft-view-modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h2>NFT Details</h2>
+                            <button class="modal-close" onclick="closeNftModal()">&times;</button>
+                        </div>
+                        <div class="modal-content">
+                            <img id="nftModalImage" class="modal-image" src="/placeholder.png" alt="NFT Image">
+                            <div class="modal-info-section">
+                                <h3>Name</h3>
+                                <p id="nftModalName">-</p>
+                            </div>
+                            <div class="modal-info-section">
+                                <h3>Description</h3>
+                                <p id="nftModalDescription">-</p>
+                            </div>
+                            <div class="modal-info-section">
+                                <h3>Attributes</h3>
+                                <div id="nftModalAttributes"></div>
+                            </div>
+                            <div class="modal-info-section">
+                                <h3>Links</h3>
+                                <div id="nftModalLinks"></div>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="modal-cancel" onclick="closeNftModal()">Close</button>
+                            <button class="modal-confirm" onclick="downloadCurrentNft()">Download Image</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+        
+        window.downloadCurrentNft = function() {
+            const modal = document.getElementById('nftViewModal');
+            if (!modal || !modal.dataset.nftData) return;
+            
+            const nft = JSON.parse(modal.dataset.nftData);
+            let imageUrl = nft.image_url || '';
+            if (!imageUrl && nft.raw_metadata) {
+                if (nft.raw_metadata.image) {
+                    imageUrl = nft.raw_metadata.image;
+                } else if (nft.raw_metadata.content && nft.raw_metadata.content.files && nft.raw_metadata.content.files[0]) {
+                    imageUrl = nft.raw_metadata.content.files[0].cdn_uri || nft.raw_metadata.content.files[0].uri;
+                }
+            }
+            
+            if (imageUrl) {
+                downloadNftImage(imageUrl, nft.name || `Token_${nft.token_id}`);
+            }
+        };
+        
+        function downloadNftImage(imageUrl, name) {
+            try {
+                // Handle CORS and cross-origin images by fetching and creating blob
+                fetch(imageUrl, { mode: 'cors' })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `${name.replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.warn('Fetch failed, trying direct download:', error);
+                        // Fallback: try direct download
+                        const link = document.createElement('a');
+                        link.href = imageUrl;
+                        link.download = `${name.replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(() => {
+                            document.body.removeChild(link);
+                        }, 100);
+                    });
+            } catch (error) {
+                console.error('Download error:', error);
+                // Last resort: open in new tab
+                window.open(imageUrl, '_blank');
+            }
+        }
+        
+        // Initialize incremental ZIP when scraping starts
+        function initIncrementalZip() {
+            if (typeof JSZip === 'undefined') {
+                console.warn('JSZip not loaded');
+                return;
+            }
+            incrementalZip = new JSZip();
+        }
+        
+        // Add NFT to incremental ZIP as it's scraped
+        async function addToIncrementalZip(nft) {
+            if (!incrementalZip || typeof JSZip === 'undefined') {
+                return;  // ZIP not initialized or library not loaded
+            }
+            
+            try {
+                let imageUrl = nft.image_url || '';
+                
+                // Extract image URL from various sources
+                if (!imageUrl && nft.raw_metadata) {
+                    if (nft.raw_metadata.image) {
+                        imageUrl = nft.raw_metadata.image;
+                    } else if (nft.raw_metadata.content && nft.raw_metadata.content.files && nft.raw_metadata.content.files[0]) {
+                        imageUrl = nft.raw_metadata.content.files[0].cdn_uri || nft.raw_metadata.content.files[0].uri;
+                    }
+                }
+                
+                if (imageUrl && imageUrl !== '/placeholder.png') {
+                    try {
+                        const response = await fetch(imageUrl, { mode: 'cors' });
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const fileName = `${(nft.name || `Token_${nft.token_id}`).replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                            incrementalZip.file(fileName, blob);
+                        }
+                    } catch (error) {
+                        // Try alternative method
+                        try {
+                            const response = await fetch(imageUrl);
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const fileName = `${(nft.name || `Token_${nft.token_id}`).replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                                incrementalZip.file(fileName, blob);
+                            }
+                        } catch (e) {
+                            console.warn(`Failed to add ${nft.name || nft.token_id} to ZIP`);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Error adding NFT to incremental ZIP:', error);
+            }
+        }
+        
+        window.downloadAllNfts = async function() {
+            if (nfts.length === 0) {
+                alert('No NFTs to download!');
+                return;
+            }
+            
+            if (typeof JSZip === 'undefined') {
+                alert('ZIP library not loaded. Please refresh the page.');
+                return;
+            }
+            
+            const downloadBtn = document.getElementById('downloadAllBtn');
+            if (downloadBtn) {
+                downloadBtn.disabled = true;
+                downloadBtn.textContent = 'Generating ZIP...';
+            }
+            
+            try {
+                // Use incremental ZIP if available, otherwise create new one
+                let zip = incrementalZip;
+                if (!zip) {
+                    zip = new JSZip();
+                    // Add all NFTs to ZIP
+                    for (const nft of nfts) {
+                        await addToIncrementalZip(nft);
+                    }
+                    zip = incrementalZip;
+                }
+                
+                if (!zip) {
+                    throw new Error('Failed to create ZIP');
+                }
+                
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                
+                // Download the ZIP file
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(zipBlob);
+                link.download = `NFTs_Collection_${new Date().getTime()}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                if (downloadBtn) {
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = `⬇️ Download All (${nfts.length})`;
+                }
+                
+                addLog(`✅ Downloaded ${nfts.length} NFTs as ZIP file`, 'success');
+            } catch (error) {
+                console.error('Error creating ZIP:', error);
+                if (downloadBtn) {
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = `⬇️ Download All (${nfts.length})`;
+                }
+                alert('Error creating ZIP file. Please try again.');
+                addLog(`❌ Error downloading ZIP: ${error.message}`, 'error');
+            }
+        };
+        
+        window.downloadSelectedNfts = async function() {
+            if (selectedNfts.size === 0) {
+                alert('No NFTs selected!');
+                return;
+            }
+            
+            if (typeof JSZip === 'undefined') {
+                alert('ZIP library not loaded. Please refresh the page.');
+                return;
+            }
+            
+            const downloadBtn = document.getElementById('downloadSelectedBtn');
+            if (downloadBtn) {
+                downloadBtn.disabled = true;
+                downloadBtn.textContent = `Creating ZIP... (${selectedNfts.size})`;
+            }
+            
+            try {
+                const zip = new JSZip();
+                let processed = 0;
+                
+                for (const cardId of selectedNfts) {
+                    const card = document.getElementById(cardId);
+                    if (!card) continue;
+                    
+                    const nftIndex = parseInt(card.dataset.nftIndex);
+                    const nft = nfts[nftIndex];
+                    if (!nft) continue;
+                    
+                    let imageUrl = nft.image_url || '';
+                    
+                    // Extract image URL from various sources
+                    if (!imageUrl && nft.raw_metadata) {
+                        if (nft.raw_metadata.image) {
+                            imageUrl = nft.raw_metadata.image;
+                        } else if (nft.raw_metadata.content && nft.raw_metadata.content.files && nft.raw_metadata.content.files[0]) {
+                            imageUrl = nft.raw_metadata.content.files[0].cdn_uri || nft.raw_metadata.content.files[0].uri;
+                        }
+                    }
+                    
+                    if (imageUrl && imageUrl !== '/placeholder.png') {
+                        try {
+                            const response = await fetch(imageUrl, { mode: 'cors' });
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const fileName = `${(nft.name || `Token_${nft.token_id}`).replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                                zip.file(fileName, blob);
+                                processed++;
+                            }
+                        } catch (error) {
+                            try {
+                                const response = await fetch(imageUrl);
+                                if (response.ok) {
+                                    const blob = await response.blob();
+                                    const fileName = `${(nft.name || `Token_${nft.token_id}`).replace(/[^a-z0-9]/gi, '_')}.jpg`;
+                                    zip.file(fileName, blob);
+                                    processed++;
+                                }
+                            } catch (e) {
+                                console.warn(`Failed to add ${nft.name || nft.token_id} to ZIP`);
+                            }
+                        }
+                    }
+                    
+                    if (downloadBtn && processed % 10 === 0) {
+                        downloadBtn.textContent = `Creating ZIP... (${processed}/${selectedNfts.size})`;
+                    }
+                }
+                
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(zipBlob);
+                link.download = `NFTs_Selected_${selectedNfts.size}_${new Date().getTime()}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+                if (downloadBtn) {
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = `⬇️ Download Selected (${selectedNfts.size})`;
+                }
+                
+                addLog(`✅ Downloaded ${processed} selected NFTs as ZIP file`, 'success');
+            } catch (error) {
+                console.error('Error creating ZIP:', error);
+                if (downloadBtn) {
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = `⬇️ Download Selected (${selectedNfts.size})`;
+                }
+                alert('Error creating ZIP file. Please try again.');
+                addLog(`❌ Error downloading ZIP: ${error.message}`, 'error');
+            }
+        };
+        
+        window.toggleNftSelection = function(cardId) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            
+            if (selectedNfts.has(cardId)) {
+                selectedNfts.delete(cardId);
+                card.classList.remove('selected');
+                card.querySelector('.checkbox').textContent = '☐';
+            } else {
+                selectedNfts.add(cardId);
+                card.classList.add('selected');
+                card.querySelector('.checkbox').textContent = '☑';
+            }
+            
+            updateDownloadButtons();
+        };
+        
+        window.toggleSelectAll = function() {
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const allSelected = selectedNfts.size === nfts.length;
+            
+            if (allSelected) {
+                // Deselect all
+                selectedNfts.clear();
+                document.querySelectorAll('.nft-card').forEach(card => {
+                    card.classList.remove('selected');
+                    const checkbox = card.querySelector('.checkbox');
+                    if (checkbox) checkbox.textContent = '☐';
+                });
+                if (selectAllBtn) selectAllBtn.textContent = '☑️ Select All';
+            } else {
+                // Select all
+                document.querySelectorAll('.nft-card').forEach(card => {
+                    selectedNfts.add(card.id);
+                    card.classList.add('selected');
+                    const checkbox = card.querySelector('.checkbox');
+                    if (checkbox) checkbox.textContent = '☑';
+                });
+                if (selectAllBtn) selectAllBtn.textContent = '☐ Deselect All';
+            }
+            
+            updateDownloadButtons();
+        };
+        
+        function updateDownloadButtons() {
+            const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+            if (downloadSelectedBtn) {
+                if (selectedNfts.size > 0) {
+                    downloadSelectedBtn.style.display = 'inline-block';
+                    downloadSelectedBtn.textContent = `⬇️ Download Selected (${selectedNfts.size})`;
+                } else {
+                    downloadSelectedBtn.style.display = 'none';
+                }
+            }
+        }
+        
+        // Show download all and clear buttons when NFTs are scraped
+        function updateDownloadButton() {
+            const downloadBtn = document.getElementById('downloadAllBtn');
+            const clearBtn = document.getElementById('clearNftsBtn');
+            if (nfts.length > 0) {
+                if (downloadBtn) {
+                    downloadBtn.textContent = `Download All (${nfts.length})`;
+                    downloadBtn.style.display = 'block';
+                }
+                if (clearBtn) {
+                    clearBtn.style.display = 'block';
+                }
+            } else {
+                if (downloadBtn) downloadBtn.style.display = 'none';
+                if (clearBtn) clearBtn.style.display = 'none';
+            }
+        }
+        
+        window.clearNfts = function() {
+            if (confirm('Are you sure you want to clear all scraped NFTs?')) {
+                nfts = [];
+                totalScrapedCount = 0;
+                const nftGrid = document.getElementById('nftGrid');
+                if (nftGrid) {
+                    nftGrid.innerHTML = '<div class="empty-state"><p>No NFTs scraped yet. Enter a collection URL and click "Start Scraping"</p></div>';
+                }
+                const totalScrapedEl = document.getElementById('totalScraped');
+                if (totalScrapedEl) totalScrapedEl.textContent = '0';
+                updateDownloadButton();
+                addLog('Cleared all NFTs', 'info');
+            }
+        };
+
+        // Ensure page is visible even if WebSocket fails
+        window.addEventListener('load', () => {
+            console.log('Page loaded, connecting WebSocket...');
+            // Small delay to ensure DOM is fully ready
+            setTimeout(connectWebSocket, 100);
+        });
+
+        // Also try connecting immediately if DOM is already ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('DOM ready, will connect WebSocket on page load');
+            });
+        } else {
+            // DOM already ready, connect after a brief delay
+            setTimeout(connectWebSocket, 500);
+        }
+    </script>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal">
+            <video class="modal-video" autoplay muted loop >
+                <source src="/static/Tron_UI_Background_Video_Generation.mp4" type="video/mp4">
+            </video>
+            <div class="modal-header">
+                <h2>Confirm Collection</h2>
+                <button class="modal-close" onclick="cancelScraping()">&times;</button>
+            </div>
+            <div class="modal-content" id="modalContent">
+                <div class="modal-loading">
+                    <div class="spinner"></div>
+                    <p>Loading collection information...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

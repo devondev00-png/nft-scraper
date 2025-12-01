@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../paywall0x402/paywall0x402 nft scraper"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "TOP SCRAPER"
+	}
+}

@@ -1,0 +1,38 @@
+========================================
+MANUAL SERVER START INSTRUCTIONS
+========================================
+
+OPTION 1: Using LAUNCH_SERVER.bat (if venv exists)
+---------------------------------------------------
+1. Double-click: LAUNCH_SERVER.bat
+   OR
+2. Open Command Prompt in this folder and type:
+   LAUNCH_SERVER.bat
+
+OPTION 2: Using PowerShell script (recommended)
+------------------------------------------------
+1. Right-click in this folder
+2. Select "Open in Terminal" or "Open PowerShell window here"
+3. Type: .\start.ps1
+   (This will create venv if needed and start server)
+
+OPTION 3: Manual Python command
+--------------------------------
+1. Open Command Prompt or PowerShell in this folder
+2. Activate virtual environment:
+   venv\Scripts\activate
+3. Start server:
+   python web_server.py
+
+OPTION 4: Direct Python (no venv)
+----------------------------------
+1. Open Command Prompt or PowerShell in this folder
+2. Type: python web_server.py
+   (Make sure Python 3.11+ is installed)
+
+After starting, open browser to: http://localhost:8080
+
+Press Ctrl+C in the terminal to stop the server.
+
+========================================
+
