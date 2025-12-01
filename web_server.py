@@ -33,6 +33,9 @@ from src.nft_scout.security import (
 
 app = FastAPI(title="NFT Scout Web UI", version="1.0.0")
 
+# Paywall configuration - URL for verifying session tokens
+PAYWALL_URL = os.getenv("PAYWALL_URL", "https://paywall0x402.onrender.com")  # UPDATE THIS to your paywall URL
+
 # Security: Configure CORS properly
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 if ALLOWED_ORIGINS == ["*"]:
@@ -422,15 +425,94 @@ def extract_collection_info(collection_url: str) -> tuple:
     return collection_url, Chain.ETHEREUM
 
 
+async def verify_session_token(token: str) -> dict:
+    """Verify session token with paywall server"""
+    if not token:
+        return {"valid": False, "error": "No token provided"}
+    
+    try:
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{PAYWALL_URL}/api/verify-session",
+                headers={"Authorization": f"Bearer {token}"},
+                params={"token": token},
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return data
+                else:
+                    return {"valid": False, "error": f"Verification failed: {resp.status}"}
+    except Exception as e:
+        logger.error(f"Error verifying session token: {e}")
+        return {"valid": False, "error": str(e)}
+
+
 @app.get("/", response_class=HTMLResponse)
-async def get_ui():
-    """Serve the main UI"""
-    import os
+async def get_ui(request: Request):
+    """Serve the main UI - with access control"""
+    # Check for session token in query params or Authorization header
+    token = request.query_params.get("token") or request.headers.get("authorization", "").replace("Bearer ", "")
+    
+    # If no token, redirect to paywall
+    if not token:
+        logger.warning("⚠️ Access attempt without token - redirecting to paywall")
+        return HTMLResponse(
+            content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Access Required - PAYWALL 0X402</title>
+                <meta http-equiv="refresh" content="3;url={PAYWALL_URL}">
+            </head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #000; color: #fff;">
+                <h1>🔒 Access Required</h1>
+                <p>You must complete payment to access the scraper tool.</p>
+                <p>Redirecting to paywall...</p>
+                <p><a href="{PAYWALL_URL}" style="color: #14f195;">Click here if not redirected</a></p>
+            </body>
+            </html>
+            """,
+            status_code=403,
+            headers={"Content-Type": "text/html; charset=utf-8"}
+        )
+    
+    # Verify token with paywall
+    verification = await verify_session_token(token)
+    if not verification.get("valid"):
+        logger.warning(f"⚠️ Invalid session token - redirecting to paywall: {verification.get('error')}")
+        return HTMLResponse(
+            content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Access Denied - PAYWALL 0X402</title>
+                <meta http-equiv="refresh" content="3;url={PAYWALL_URL}">
+            </head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #000; color: #fff;">
+                <h1>❌ Access Denied</h1>
+                <p>Your session is invalid or expired.</p>
+                <p>Please complete payment to access the scraper tool.</p>
+                <p>Redirecting to paywall...</p>
+                <p><a href="{PAYWALL_URL}" style="color: #14f195;">Click here if not redirected</a></p>
+            </body>
+            </html>
+            """,
+            status_code=403,
+            headers={"Content-Type": "text/html; charset=utf-8"}
+        )
+    
+    # Token is valid - serve the UI
+    logger.info(f"✅ Valid session - granting access (type: {verification.get('accessType', 'unknown')})")
     ui_path = os.path.join(os.path.dirname(__file__), "ui", "index.html")
     try:
         with open(ui_path, "r", encoding="utf-8") as f:
             content = f.read()
-        # Explicitly set Content-Type header to ensure browser renders HTML
+        # Inject token into page for WebSocket connections
+        # The token will be available in the URL query params
         return HTMLResponse(
             content=content,
             headers={"Content-Type": "text/html; charset=utf-8"}
