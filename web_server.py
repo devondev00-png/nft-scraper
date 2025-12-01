@@ -1246,15 +1246,24 @@ async def websocket_endpoint(websocket: WebSocket):
                                 total_scraped += 1
                                 
                                 # Convert NFT to dict and ensure HttpUrl fields are strings
+                                nft_dict = None
                                 try:
-                                    nft_dict = nft.dict() if hasattr(nft, 'dict') else nft.model_dump()
+                                    if hasattr(nft, 'dict'):
+                                        nft_dict = nft.dict()
+                                    elif hasattr(nft, 'model_dump'):
+                                        nft_dict = nft.model_dump()
+                                    else:
+                                        nft_dict = {"token_id": str(nft.token_id), "contract_address": str(nft.contract_address)}
                                 except Exception:
-                                    # Fallback: use model_dump for Pydantic v2
                                     try:
-                                        nft_dict = nft.model_dump() if hasattr(nft, 'model_dump') else nft.dict()
+                                        if hasattr(nft, 'model_dump'):
+                                            nft_dict = nft.model_dump()
+                                        elif hasattr(nft, 'dict'):
+                                            nft_dict = nft.dict()
+                                        else:
+                                            nft_dict = {"token_id": str(nft.token_id), "contract_address": str(nft.contract_address)}
                                     except Exception as e:
                                         logger.warning(f"Error converting NFT to dict: {e}")
-                                        # Last resort: convert to dict manually
                                         nft_dict = {"token_id": str(nft.token_id), "contract_address": str(nft.contract_address)}
                                 
                                 # Ensure HttpUrl fields are strings (double check)
