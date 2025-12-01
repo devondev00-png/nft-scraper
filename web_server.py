@@ -1760,25 +1760,33 @@ async def websocket_endpoint(websocket: WebSocket):
                     except Exception as stats_err:
                         logger.warning(f"Error getting collection stats: {stats_err}")
                     
-                    # SKIP COUNTING in get_collection_info - just use API totals
-                    # Counting will happen during scraping if needed
-                    # This makes the confirmation modal show immediately
-                    logger.info(f"✅ [get_collection_info] Using API total: {collection_total}, skipping counting (will count during scraping if needed)")
-                    
-                    # Don't count here - just use what we got from APIs
-                    # If total is None or suspicious, we'll count during scraping
+                    # Determine if we should count
+                    # For Ethereum, if no total from APIs, we MUST count (Alchemy doesn't provide total)
+                    # For other chains, only count if total is None or suspicious
                     should_count = False
                     
-                    # Log what we have
-                    if not collection_total:
-                        logger.info(f"⚠️ [get_collection_info] No total from APIs - will show 'Unknown' in modal, counting will happen during scraping")
+                    if chain != Chain.SOLANA and not collection_total:
+                        # Ethereum and other EVM chains - Alchemy doesn't provide total, so we must count
+                        should_count = True
+                        logger.info(f"🔍 [get_collection_info] Ethereum collection with no total - will count NFTs")
+                    elif collection_total and collection_total > 100 and collection_total != 100:
+                        # We have a valid total - don't count
+                        should_count = False
+                        logger.info(f"✅ [get_collection_info] Using API total: {collection_total:,} for confirmation modal")
                     elif (chain != Chain.SOLANA and collection_total == 100) or (chain == Chain.SOLANA and collection_total == 1000):
-                        logger.info(f"⚠️ [get_collection_info] Total ({collection_total}) equals page size - might be inaccurate, will verify during scraping")
+                        # Total equals page size - might be inaccurate, count to verify
+                        should_count = True
+                        logger.info(f"⚠️ [get_collection_info] Total ({collection_total}) equals page size - counting to verify")
+                    elif not collection_total:
+                        # No total at all - count it
+                        should_count = True
+                        logger.info(f"⚠️ [get_collection_info] No total from APIs - counting NFTs")
                     else:
+                        should_count = False
                         logger.info(f"✅ [get_collection_info] Using API total: {collection_total:,} for confirmation modal")
                     
-                    # Skip counting block - just use API totals for modal
-                    if False:  # Disabled counting in get_collection_info
+                    # Count if needed (especially for Ethereum collections)
+                    if should_count:
                         logger.info(f"🚀 Starting NFT counting process for {contract_address} on {chain.value}...")
                         logger.info(f"🚀 [DEBUG] Entering counting block - should_count={should_count}, collection_total={collection_total}")
                         try:
@@ -1987,9 +1995,8 @@ async def websocket_endpoint(websocket: WebSocket):
                                 "api_source": "Backend",
                             }, websocket)
                     else:
-                        logger.warning(f"⚠️ [DEBUG] Counting was NOT triggered - should_count={should_count}, collection_total={collection_total}, chain={chain.value}")
-                        if chain != Chain.SOLANA and not collection_total:
-                            logger.error(f"❌ CRITICAL: Ethereum collection with no total but counting not triggered! This should not happen!")
+                        # Counting was not needed - we have a valid total
+                        logger.info(f"✅ [get_collection_info] Counting not needed - using API total: {collection_total:,}")
                     
                     # Prepare response with all available collection info
                     # CRITICAL: Use the counted total if available (it's the most accurate)
