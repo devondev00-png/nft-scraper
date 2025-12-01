@@ -1,0 +1,12 @@
+# Render ignore file
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv
+.git/
+*.log
+
