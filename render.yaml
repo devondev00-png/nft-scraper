@@ -13,4 +13,11 @@ services:
         value: "*"
       - key: ALLOWED_HOSTS
         value: "*"
+      # NOTE: API keys must be added in Render Dashboard → Environment Variables
+      # Do NOT add actual keys here - add them in the Render dashboard for security
+      # Required keys:
+      # - HELIUS_API_KEY (for Solana)
+      # - ALCHEMY_API_KEY (for Ethereum, Polygon, Arbitrum, Base, etc.)
+      # - MORALIS_API_KEY (optional backup for EVM chains)
+      # See RENDER_API_KEYS.md for instructions
 
