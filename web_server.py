@@ -1251,7 +1251,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                 except Exception:
                                     # Fallback: use model_dump for Pydantic v2
                                     try:
-                                    nft_dict = nft.model_dump() if hasattr(nft, 'model_dump') else nft.dict()
+                                        nft_dict = nft.model_dump() if hasattr(nft, 'model_dump') else nft.dict()
                                     except Exception as e:
                                         logger.warning(f"Error converting NFT to dict: {e}")
                                         # Last resort: convert to dict manually
